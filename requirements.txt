@@ -1,0 +1,14 @@
+black 
+isort
+ipykernel
+python_dotenv
+
+langchain 
+langchain-text-splitters
+langchain-community
+langchain-google-genai
+langchain-huggingface
+sentence-transformers
+langchain-pinecone
+
+langgraph
