@@ -12,3 +12,5 @@ sentence-transformers
 langchain-pinecone
 
 langgraph
+
+streamlit
