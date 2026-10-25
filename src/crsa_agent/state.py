@@ -14,7 +14,12 @@ class Severity(str, Enum):
 
 class Finding(BaseModel):
     category: str = Field(
-        description="Category of the finding."
+        description=(
+            "Type of issue detected, such as Code Smell, Complexity, "
+            "Design Issue, Best Practice Violation, SQL Injection, "
+            "Cross-Site Scripting (XSS), Hardcoded Secret, "
+            "Broken Access Control, or Input Validation."
+        )
     )
     issue: str = Field(
         description="Short title describing the issue."
