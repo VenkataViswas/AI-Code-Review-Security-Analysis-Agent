@@ -1,13 +1,11 @@
 
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 
 from crsa_agent.state import (AgentResult)
 
-
-llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
-    temperature=0,
+llm = ChatGroq(
+    model="qwen/qwen3.8-27b"
 )
 
 prompt = ChatPromptTemplate.from_messages([

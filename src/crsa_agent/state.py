@@ -35,10 +35,6 @@ class Finding(BaseModel):
     description: str = Field(
         description="Explanation of the issue and its impact."
     )
-    recommendation: str = Field(
-        description="Initial recommendation to address the issue."
-    )
-
 
 class AgentResult(BaseModel):
     findings: list[Finding] = Field(
