@@ -6,6 +6,7 @@ from langgraph.graph import MessagesState
 
 
 class Severity(str, Enum):
+    INFORMATIONAL = "INFORMATIONAL" # Suggestion no immediate action required
     LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
@@ -25,7 +26,7 @@ class Finding(BaseModel):
         description="Short title describing the issue."
     )
     severity: Severity = Field(
-        description="Severity: LOW, MEDIUM, HIGH, or CRITICAL."
+    description="Severity: INFORMATIONAL, LOW, MEDIUM, HIGH, or CRITICAL."
     )
     line_number: int | None = Field(
         default=None,
