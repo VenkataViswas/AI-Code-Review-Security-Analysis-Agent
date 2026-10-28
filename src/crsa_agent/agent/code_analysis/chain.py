@@ -22,6 +22,7 @@ prompt = ChatPromptTemplate.from_messages([
         4. Poor coding practices
         5. Code quality and maintainability issues
         6. Potential reliability and failure risks
+        7. security issues are detected by other agents so no need for security analysis
 
         Consider the following six code quality metrics during analysis:
 
