@@ -1,0 +1,41 @@
+filename,language,test_category,purpose
+python_clean_01.py,Python,Clean code,Baseline; should produce few or no significant findings
+python_clean_02.py,Python,Clean code,Baseline; should produce few or no significant findings
+python_syntax_01.py,Python,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+python_syntax_02.py,Python,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+python_syntax_03.py,Python,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+python_syntax_04.py,Python,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+python_quality_01.py,Python,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+python_quality_02.py,Python,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+python_quality_03.py,Python,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+python_quality_04.py,Python,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+python_security_01.py,Python,Security only,Test security vulnerability detection
+python_security_02.py,Python,Security only,Test security vulnerability detection
+python_security_03.py,Python,Security only,Test security vulnerability detection
+python_security_04.py,Python,Security only,Test security vulnerability detection
+python_mixed_01.py,Python,Mixed quality + security,Test both code quality and security findings
+python_mixed_02.py,Python,Mixed quality + security,Test both code quality and security findings
+python_mixed_03.py,Python,Mixed quality + security,Test both code quality and security findings
+python_mixed_04.py,Python,Mixed quality + security,Test both code quality and security findings
+python_mixed_05.py,Python,Mixed quality + security,Test both code quality and security findings
+python_mixed_06.py,Python,Mixed quality + security,Test both code quality and security findings
+java_clean_01.java,Java,Clean code,Baseline; should produce few or no significant findings
+java_clean_02.java,Java,Clean code,Baseline; should produce few or no significant findings
+java_syntax_01.java,Java,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+java_syntax_02.java,Java,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+java_syntax_03.java,Java,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+java_syntax_04.java,Java,Syntax/compilation error,Test parser/compiler error detection and graceful handling
+java_quality_01.java,Java,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+java_quality_02.java,Java,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+java_quality_03.java,Java,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+java_quality_04.java,Java,Code quality only,"Test code smells, maintainability, complexity, or error handling"
+java_security_01.java,Java,Security only,Test security vulnerability detection
+java_security_02.java,Java,Security only,Test security vulnerability detection
+java_security_03.java,Java,Security only,Test security vulnerability detection
+java_security_04.java,Java,Security only,Test security vulnerability detection
+java_mixed_01.java,Java,Mixed quality + security,Test both code quality and security findings
+java_mixed_02.java,Java,Mixed quality + security,Test both code quality and security findings
+java_mixed_03.java,Java,Mixed quality + security,Test both code quality and security findings
+java_mixed_04.java,Java,Mixed quality + security,Test both code quality and security findings
+java_mixed_05.java,Java,Mixed quality + security,Test both code quality and security findings
+java_mixed_06.java,Java,Mixed quality + security,Test both code quality and security findings
