@@ -187,7 +187,7 @@ def main():
     try:
         rag_chain, retriever = create_rag_chain()
 
-        question = "What is security in applications?"
+        question = "is docs string that much important as to make it as low critical"
 
         answer = ask_question(
             question=question,

@@ -7,6 +7,7 @@ langchain
 langchain-text-splitters
 langchain-community
 langchain-google-genai
+langchain-groq
 langchain-huggingface
 sentence-transformers
 langchain-pinecone
