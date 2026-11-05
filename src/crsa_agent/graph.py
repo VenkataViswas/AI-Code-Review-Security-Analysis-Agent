@@ -4,13 +4,14 @@ from langgraph.graph import StateGraph, START, END
 from crsa_agent.state import MessageState
 from crsa_agent.agent.code_analysis.node import code_analysis_node
 from crsa_agent.agent.security_analysis.node import security_analysis_node
-
+from crsa_agent.agent.remediation.node import remediation_node
 
 builder = StateGraph(MessageState)
 
 # Register agent nodes
 builder.add_node("code_analysis", code_analysis_node)
 builder.add_node("security_analysis", security_analysis_node)
+builder.add_node("remediation", remediation_node)
 
 # Merge and sort findings by severity
 builder.add_node(
@@ -37,7 +38,10 @@ builder.add_edge(START, "security_analysis")
 builder.add_edge("code_analysis", "merge_findings")
 builder.add_edge("security_analysis", "merge_findings")
 
-builder.add_edge("merge_findings", END)
+# Remediation
+builder.add_edge("merge_findings", "remediation")
+builder.add_edge("remediation", END)
+
 
 # Compile the graph
 graph = builder.compile()
