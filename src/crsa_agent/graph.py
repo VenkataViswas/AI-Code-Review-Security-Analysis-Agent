@@ -1,3 +1,4 @@
+
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import RetryPolicy
 
@@ -9,32 +10,32 @@ from crsa_agent.agent.pr_summary.node import pr_summary_node
 
 builder = StateGraph(MessageState)
 
-# Retry policy: maximum 10 attempts per node
+# Retry policy: maximum 10 attempts
 retry_policy = RetryPolicy(max_attempts=10)
 
 # Register agent nodes with retry policy
 builder.add_node(
     "code_analysis",
     code_analysis_node,
-    retry_policy=retry_policy,
+    retry_policy=retry_policy
 )
 
 builder.add_node(
     "security_analysis",
     security_analysis_node,
-    retry_policy=retry_policy,
+    retry_policy=retry_policy
 )
 
 builder.add_node(
     "remediation",
     remediation_node,
-    retry_policy=retry_policy,
+    retry_policy=retry_policy
 )
 
 builder.add_node(
     "pr_summary",
     pr_summary_node,
-    retry_policy=retry_policy,
+    retry_policy=retry_policy
 )
 
 # Merge and sort findings by severity
@@ -48,11 +49,10 @@ builder.add_node(
                 "HIGH": 1,
                 "MEDIUM": 2,
                 "LOW": 3,
-                "INFORMATIONAL": 4,
+                "INFORMATIONAL": 4
             }.get(item["severity"], 5),
         )
     },
-    retry_policy=retry_policy,
 )
 
 # Run both agents in parallel
@@ -63,16 +63,18 @@ builder.add_edge(START, "security_analysis")
 builder.add_edge("code_analysis", "merge_findings")
 builder.add_edge("security_analysis", "merge_findings")
 
-# Remediation
+# Remediation and summary
 builder.add_edge("merge_findings", "remediation")
 builder.add_edge("remediation", "pr_summary")
 builder.add_edge("pr_summary", END)
 
-# Compile the graph
+# Compile graph
 graph = builder.compile()
 
 if __name__ == "__main__":
-    graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
+    graph.get_graph().draw_mermaid_png(
+        output_file_path="graph.png"
+    )
 
     sample_code = '''
     import sqlite3

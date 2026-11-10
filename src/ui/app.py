@@ -10,7 +10,7 @@ from crsa_agent.initial_code_check_utils import (
     check_python,
 )
 from crsa_agent.graph import graph
-
+from crsa_agent.agent.cca import ask_cca
 
 # --------------------------------------------------
 # Page Configuration
@@ -153,7 +153,8 @@ if "code_text" not in st.session_state:
 if "result" not in st.session_state:
     st.session_state.result = None
 
-
+if "cca_messages" not in st.session_state:
+    st.session_state.cca_messages = []
 # --------------------------------------------------
 # Helper Functions
 # --------------------------------------------------
@@ -541,178 +542,281 @@ with right:
         # Successful graph execution
         # ------------------------------------------
 
+        # ------------------------------------------
+
+        # Successful graph execution
+
+        # ------------------------------------------
+
         elif result["stage"] == "analysis":
+
             analysis = result["analysis"]
 
-            st.divider()
-            st.markdown("### AI Code Analysis Report")
+            # --------------------------------------
+
+            # Extract graph output FIRST
+
+            # --------------------------------------
 
             code_findings = get_list(analysis, "code_findings")
+
             security_findings = get_list(analysis, "security_findings")
+
             unified_findings = get_list(analysis, "unified_findings")
+
             remediation_findings = get_list(
+
                 analysis,
+
                 "remediation_findings",
+
             )
 
             # --------------------------------------
+
             # Summary metrics
-            # --------------------------------------
-
-            col1, col2, col3 = st.columns(3)
-
-            col1.metric("Code Quality", len(code_findings))
-            col2.metric("Security Issues", len(security_findings))
-            col3.metric("Total Findings", len(unified_findings))
 
             # --------------------------------------
+
+            st.divider()
+
+            st.markdown("### AI Code Analysis Report")
+
+            # Keep your existing summary metrics code here.
+
+            # --------------------------------------
+
             # Unified findings
+
             # --------------------------------------
 
             st.markdown("#### Unified Findings")
 
             if unified_findings:
+
                 for index, finding in enumerate(
-                    unified_findings,
-                    start=1,
+
+                        unified_findings,
+
+                        start=1,
+
                 ):
                     render_finding(finding, index, language)
 
+
             elif code_findings or security_findings:
+
                 st.warning(
-                    "The graph returned agent findings, but the unified "
-                    "findings list is empty. Check the merge node."
+
+                    "Agent findings were returned, but unified findings are empty. "
+
+                    "Check your merge node."
+
                 )
 
+
             else:
+
                 st.success(
+
                     "No findings were returned by the analysis graph."
+
                 )
 
             # --------------------------------------
+
             # Remediation
+
             # --------------------------------------
 
             st.divider()
+
             st.markdown("#### Remediation and Suggested Fixes")
 
             if remediation_findings:
+
                 for index, fix in enumerate(
-                    remediation_findings,
-                    start=1,
+
+                        remediation_findings,
+
+                        start=1,
+
                 ):
+
                     issue = fix.get(
+
                         "issue",
+
                         fix.get("title", f"Remediation {index}"),
+
                     )
 
                     with st.expander(
-                        f"{index}. {issue}",
-                        expanded=(index == 1),
+
+                            f"{index}. {issue}",
+
+                            expanded=(index == 1),
+
                     ):
+
                         st.write(
-                            f"**Severity:** "
-                            f"{fix.get('severity', 'Unknown')}"
+
+                            f"**Severity:** {fix.get('severity', 'Unknown')}"
+
                         )
 
                         st.write(
-                            f"**Line number:** "
-                            f"{fix.get('line_number', 'N/A')}"
+
+                            f"**Line number:** {fix.get('line_number', 'N/A')}"
+
                         )
 
                         if fix.get("description"):
                             st.markdown("**Description**")
+
                             st.write(fix["description"])
 
                         if fix.get("fix_recommendation"):
                             st.markdown("**Recommended fix**")
+
                             st.write(fix["fix_recommendation"])
 
                         if fix.get("corrected_code"):
                             st.markdown("**Corrected code**")
+
                             st.code(
+
                                 str(fix["corrected_code"]),
+
                                 language=language.lower(),
+
                             )
 
                         if fix.get("best_practice"):
                             st.markdown("**Best practice**")
+
                             st.write(fix["best_practice"])
 
-                        # Preserve any additional model fields.
                         st.json(fix)
 
+
             else:
+
                 st.info(
+
                     "No remediation findings were returned by the graph."
+
                 )
 
             # --------------------------------------
+
             # Code Quality Agent output
+
             # --------------------------------------
 
             with st.expander("View Code Quality Agent Findings"):
+
                 if code_findings:
+
                     for index, finding in enumerate(
-                        code_findings,
-                        start=1,
+
+                            code_findings,
+
+                            start=1,
+
                     ):
                         render_finding(finding, index, language)
+
                 else:
+
                     st.info(
+
                         "No separate code quality findings were returned."
+
                     )
 
             # --------------------------------------
+
             # Security Agent output
+
             # --------------------------------------
 
             with st.expander("View Security Agent Findings"):
+
                 if security_findings:
+
                     for index, finding in enumerate(
-                        security_findings,
-                        start=1,
+
+                            security_findings,
+
+                            start=1,
+
                     ):
                         render_finding(finding, index, language)
+
                 else:
+
                     st.info(
+
                         "No separate security findings were returned."
+
                     )
 
             # --------------------------------------
+
             # Final PR Summary
+
             # --------------------------------------
 
             st.divider()
+
             st.markdown("#### Final PR Summary")
 
             pr_summary = analysis.get("pr_summary")
 
             if pr_summary:
+
                 if isinstance(pr_summary, str):
+
                     st.markdown(pr_summary)
+
                 else:
+
                     st.json(to_dict(pr_summary))
 
+
             else:
-                # Check messages for a summary if the graph stores
-                # its final output as a message instead of a state key.
+
                 messages = analysis.get("messages", [])
+
                 summary_found = False
 
                 for message in messages:
+
                     if isinstance(message, Mapping):
+
                         content = message.get("content", "")
+
                         role = message.get(
+
                             "role",
+
                             message.get("type", "Agent"),
+
                         )
+
                     else:
+
                         content = getattr(message, "content", "")
+
                         role = getattr(
+
                             message,
+
                             "type",
+
                             message.__class__.__name__,
+
                         )
 
                     if not content:
@@ -722,43 +826,202 @@ with right:
 
                     if "summary" in role_text or "pr" in role_text:
                         st.markdown(f"**{role}**")
+
                         st.markdown(format_value(content))
+
                         summary_found = True
 
                 if not summary_found:
                     st.info(
-                        "No explicit PR summary was found in the graph output. "
-                        "The current workflow must return a summary field or "
-                        "a summary message for this section to display one."
+
+                        "No explicit PR summary was found in the graph output."
+
                     )
 
             # --------------------------------------
+
             # Complete graph output
+
             # --------------------------------------
 
             with st.expander("Inspect Complete Graph Output"):
+
                 st.json(analysis)
 
             # --------------------------------------
+
             # Download report
+
             # --------------------------------------
 
             st.divider()
 
             st.download_button(
+
                 label="Download Full Analysis (JSON)",
+
                 data=json.dumps(
+
                     analysis,
+
                     indent=2,
+
                     default=str,
+
                 ),
+
                 file_name="codecheck_analysis.json",
+
                 mime="application/json",
+
                 use_container_width=True,
+
             )
 
+            # --------------------------------------
 
-# --------------------------------------------------
+            # Conversational Code Assistant
+
+            # --------------------------------------
+
+            st.divider()
+
+            st.markdown("### 💬 Conversational Code Assistant")
+
+            st.caption(
+
+                "Ask questions about your code review, security "
+
+                "vulnerabilities, remediation, or secure coding practices."
+
+            )
+
+            # Use complete graph output as CCA context.
+
+            review_context = json.dumps(
+
+                {
+
+                    "language": language,
+
+                    "submitted_code": code,
+
+                    "graph_output": analysis,
+
+                },
+
+                indent=2,
+
+                default=str,
+
+            )
+
+            # Display conversation history.
+
+            for message in st.session_state.cca_messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"])
+
+            question = st.chat_input(
+
+                "Ask something about your code analysis...",
+
+                key="cca_chat_input",
+
+            )
+
+            if question:
+
+                st.session_state.cca_messages.append(
+
+                    {
+
+                        "role": "user",
+
+                        "content": question,
+
+                    }
+
+                )
+
+                with st.chat_message("user"):
+
+                    st.markdown(question)
+
+                # Preserve previous conversation for follow-up questions.
+
+                previous_messages = st.session_state.cca_messages[:-1]
+
+                conversation_history = "\n".join(
+
+                    f'{msg["role"].upper()}: {msg["content"]}'
+
+                    for msg in previous_messages
+
+                )
+
+                contextual_question = (
+
+                    f"Previous conversation:\n{conversation_history}\n\n"
+
+                    f"Current question:\n{question}"
+
+                    if conversation_history
+
+                    else question
+
+                )
+
+                with st.chat_message("assistant"):
+
+                    with st.spinner(
+
+                            "CCA is retrieving knowledge and preparing an answer..."
+
+                    ):
+
+                        try:
+
+                            response = ask_cca(
+
+                                question=contextual_question,
+
+                                review_context=review_context,
+
+                            )
+
+                            response = str(response)
+
+                            st.markdown(response)
+
+                            st.session_state.cca_messages.append(
+
+                                {
+
+                                    "role": "assistant",
+
+                                    "content": response,
+
+                                }
+
+                            )
+
+
+                        except Exception as exc:
+
+                            st.error(
+
+                                "CCA could not generate a response."
+
+                            )
+
+                            st.exception(exc)
+
+                st.rerun()
+
+
+
+
 # Footer
 # --------------------------------------------------
 
@@ -768,3 +1031,5 @@ st.caption(
     "CodeCheck · AI-powered code quality analysis, "
     "security vulnerability detection, and remediation for Python and Java"
 )
+
+

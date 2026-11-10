@@ -1,4 +1,4 @@
-// Clean example: validation and a focused method.
+
 class PriceCalculator {
     public double discountedPrice(double price, double percentage) {
         if (price < 0) {
