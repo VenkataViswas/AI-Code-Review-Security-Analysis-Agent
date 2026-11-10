@@ -79,3 +79,72 @@ class MessageState(MessagesState):
     security_findings: list[dict]
     unified_findings: list[dict]
     remediation_findings: list[dict]
+    pr_summary: list[dict]
+
+class PRReviewStatus(str, Enum):
+    APPROVED = "APPROVED"
+    APPROVED_WITH_SUGGESTIONS = "APPROVED_WITH_SUGGESTIONS"
+    CHANGES_REQUESTED = "CHANGES_REQUESTED"
+
+
+class SeveritySummary(BaseModel):
+    informational: int = Field(default=0)
+    low: int = Field(default=0)
+    medium: int = Field(default=0)
+    high: int = Field(default=0)
+    critical: int = Field(default=0)
+
+
+class PRSummary(BaseModel):
+    title: str = Field(
+        description="Short, meaningful title for the pull request review."
+    )
+
+    overview: str = Field(
+        description="Human-readable summary of the overall code review."
+    )
+
+    review_status: PRReviewStatus = Field(
+        description=(
+            "Overall review decision: APPROVED, "
+            "APPROVED_WITH_SUGGESTIONS, or CHANGES_REQUESTED."
+        )
+    )
+
+    total_findings: int = Field(
+        default=0,
+        description="Total number of unique findings across all agents."
+    )
+
+    severity_breakdown: SeveritySummary = Field(
+        default_factory=SeveritySummary,
+        description="Count of findings grouped by severity."
+    )
+
+    key_issues: list[str] = Field(
+        default_factory=list,
+        description="Most important issues identified during the review."
+    )
+
+    positive_observations: list[str] = Field(
+        default_factory=list,
+        description="Positive aspects of the code identified during review."
+    )
+
+    recommendations: list[str] = Field(
+        default_factory=list,
+        description="Prioritized recommendations for improving the code."
+    )
+
+    merge_recommendation: str = Field(
+        description=(
+            "Final recommendation explaining whether the PR should be merged, "
+            "merged with suggestions, or blocked until issues are resolved."
+        )
+    )
+
+
+class PRSummaryResult(BaseModel):
+    summary: PRSummary = Field(
+        description="Consolidated pull request review summary."
+    )

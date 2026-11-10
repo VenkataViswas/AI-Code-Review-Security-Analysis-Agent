@@ -1,16 +1,42 @@
 
 from langgraph.graph import StateGraph, START, END
+from langgraph.types import RetryPolicy
 
 from crsa_agent.state import MessageState
 from crsa_agent.agent.code_analysis.node import code_analysis_node
 from crsa_agent.agent.security_analysis.node import security_analysis_node
-
+from crsa_agent.agent.remediation.node import remediation_node
+from crsa_agent.agent.pr_summary.node import pr_summary_node
 
 builder = StateGraph(MessageState)
 
-# Register agent nodes
-builder.add_node("code_analysis", code_analysis_node)
-builder.add_node("security_analysis", security_analysis_node)
+# Retry policy: maximum 10 attempts
+retry_policy = RetryPolicy(max_attempts=10)
+
+# Register agent nodes with retry policy
+builder.add_node(
+    "code_analysis",
+    code_analysis_node,
+    retry_policy=retry_policy
+)
+
+builder.add_node(
+    "security_analysis",
+    security_analysis_node,
+    retry_policy=retry_policy
+)
+
+builder.add_node(
+    "remediation",
+    remediation_node,
+    retry_policy=retry_policy
+)
+
+builder.add_node(
+    "pr_summary",
+    pr_summary_node,
+    retry_policy=retry_policy
+)
 
 # Merge and sort findings by severity
 builder.add_node(
@@ -23,7 +49,7 @@ builder.add_node(
                 "HIGH": 1,
                 "MEDIUM": 2,
                 "LOW": 3,
-                "INFORMATIONAL" : 4
+                "INFORMATIONAL": 4
             }.get(item["severity"], 5),
         )
     },
@@ -37,13 +63,18 @@ builder.add_edge(START, "security_analysis")
 builder.add_edge("code_analysis", "merge_findings")
 builder.add_edge("security_analysis", "merge_findings")
 
-builder.add_edge("merge_findings", END)
+# Remediation and summary
+builder.add_edge("merge_findings", "remediation")
+builder.add_edge("remediation", "pr_summary")
+builder.add_edge("pr_summary", END)
 
-# Compile the graph
+# Compile graph
 graph = builder.compile()
 
 if __name__ == "__main__":
-    graph.get_graph().draw_mermaid_png(output_file_path="graph.png")
+    graph.get_graph().draw_mermaid_png(
+        output_file_path="graph.png"
+    )
 
     sample_code = '''
     import sqlite3
@@ -57,17 +88,6 @@ if __name__ == "__main__":
         cursor.execute(query)
         result = cursor.fetchall()
         return result
-
-
-    def process_users(users):
-        results = []
-
-        for user in users:
-            if user is not None:
-                if user["active"] == True:
-                    if user["role"] == "admin":
-                        results.append(user["name"])
-        return results
     '''
 
     initial_state = {
@@ -77,4 +97,3 @@ if __name__ == "__main__":
 
     result = graph.invoke(initial_state)
     print(result)
-

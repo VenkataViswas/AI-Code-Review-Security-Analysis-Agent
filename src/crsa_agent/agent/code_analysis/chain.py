@@ -4,10 +4,7 @@ from langchain_groq import ChatGroq
 
 from crsa_agent.state import (AgentResult)
 
-llm = ChatGroq(
-    model="qwen/qwen3.8-27b"
-)
-
+llm = ChatGroq(model="qwen/qwen3.8-27b")
 prompt = ChatPromptTemplate.from_messages([
     (
         "system",

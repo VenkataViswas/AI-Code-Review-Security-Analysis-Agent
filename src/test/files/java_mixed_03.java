@@ -1,4 +1,4 @@
-// Mixed: command injection risk and an overly long method.
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
