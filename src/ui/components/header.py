@@ -12,7 +12,7 @@ def render_header():
                             <span class="pulse-dot-green"></span> Multi-Agent Pipeline Active
                         </span>
                         <span class="badge-pill-light badge-cyan">LangGraph Orchestrated</span>
-                        <span class="badge-pill-light badge-green">OWASP Top 10 Standards</span>
+                        <span class="badge-pill-light badge-green">⚡ Real-Time Checking</span>
                     </div>
                     <h1 style="margin: 0; padding: 0; font-size: 2.1rem; font-weight: 800; color: #1e1b4b; letter-spacing: -0.03em;">
                         🛡️ CRSA-Agent <span style="font-size: 1.2rem; font-weight: 600; color: #7c3aed;">AI Code Review & Security Analysis</span>
@@ -26,7 +26,6 @@ def render_header():
                     <div style="display: flex; gap: 6px; flex-wrap: wrap;">
                         <span class="badge-pill-light badge-purple">🐍 Python 3.x</span>
                         <span class="badge-pill-light badge-cyan">☕ Java</span>
-                        <span class="badge-pill-light badge-green">⚡ Real-Time AST</span>
                     </div>
                     <span style="font-size: 0.78rem; color: #6b7280; margin-top: 8px; font-weight: 600;">
                         Enterprise Multi-Agent Pipeline v1.0

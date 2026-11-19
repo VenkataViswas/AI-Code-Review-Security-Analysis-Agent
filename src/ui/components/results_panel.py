@@ -488,7 +488,8 @@ def create_pdf_charts(severity_breakdown, findings_df):
 
     fig.tight_layout()
     severity_buffer = BytesIO()
-    fig.savefig(severity_buffer, format="png", dpi=160, bbox_inches="tight")
+    fig.savefig(severity_buffer,format="png",dpi=300,bbox_inches="tight",pad_inches=0.15)
+
     plt.close(fig)
     severity_buffer.seek(0)
     chart_images.append(severity_buffer)
@@ -508,7 +509,7 @@ def create_pdf_charts(severity_breakdown, findings_df):
         fig.tight_layout()
 
         category_buffer = BytesIO()
-        fig.savefig(category_buffer, format="png", dpi=160, bbox_inches="tight")
+        fig.savefig(category_buffer,format="png",dpi=300,bbox_inches="tight",pad_inches=0.15)
         plt.close(fig)
         category_buffer.seek(0)
         chart_images.append(category_buffer)
@@ -642,10 +643,16 @@ def generate_dashboard_pdf(data):
     # Visual Analytics
     story.append(Paragraph("Visual Analytics", styles["SectionCustom"]))
     for chart_buffer in create_pdf_charts(breakdown, findings_df):
-        chart = PDFImage(chart_buffer)
-        chart.drawHeight = 60 * mm
-        chart.drawWidth = 175 * mm
+        chart_buffer.seek(0)
+        chart = PDFImage(
+        chart_buffer,
+        width=170 * mm,
+        height=85 * mm,
+        kind="proportional",
+        )
+
         chart.hAlign = "CENTER"
+
         story.append(chart)
         story.append(Spacer(1, 5))
 

@@ -50,28 +50,6 @@ with st.sidebar:
         unsafe_allow_html=True,
     )
 
-    st.markdown(
-        """
-        <div style="background: #ffffff; border: 1.5px solid #e9d5ff; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(124, 58, 237, 0.05);">
-            <div style="font-size: 0.74rem; font-weight: 700; color: #6b7280; text-transform: uppercase; margin-bottom: 8px;">
-                System Status
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.84rem; margin-bottom: 6px;">
-                <span style="color: #312e81;">Agent Mesh:</span>
-                <span style="color: #16a34a; font-weight: 700;">● 4/4 Online</span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.84rem; margin-bottom: 6px;">
-                <span style="color: #312e81;">LangGraph Engine:</span>
-                <span style="color: #7c3aed; font-weight: 700;">Active</span>
-            </div>
-            <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.84rem;">
-                <span style="color: #312e81;">Standards:</span>
-                <span style="color: #d97706; font-weight: 700;">OWASP Top 10</span>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
 
     st.divider()
 

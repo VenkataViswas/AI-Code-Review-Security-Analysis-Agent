@@ -179,13 +179,23 @@ def render_input_panel():
     # Editor Header Toolbar & Metadata Bar (Purple Theme)
     # ---------------------------------------------------------
     current_code = st.session_state.get("code_text", "")
-    language = detect_language(current_code, upload_name)
+
+    # Auto-detect language from source code only; never force a default.
+    language = detect_language(current_code) if current_code.strip() else "Not detected"
+
     line_count = len(current_code.splitlines()) if current_code else 0
     char_count = len(current_code)
-    file_label = upload_name if upload_name else ("scratchpad.py" if language == "Python" else "Scratchpad.java")
+    file_label = upload_name if upload_name else "Untitled"
 
-    lang_badge_class = "badge-purple" if language == "Python" else "badge-cyan"
-    lang_icon = "🐍" if language == "Python" else "☕"
+    if language == "Python":
+        lang_badge_class = "badge-purple"
+        lang_icon = "🐍"
+    elif language == "Java":
+        lang_badge_class = "badge-cyan"
+        lang_icon = "☕"
+    else:
+        lang_badge_class = "badge-purple"
+        lang_icon = "📝"
 
     st.write("")
     st.markdown(
