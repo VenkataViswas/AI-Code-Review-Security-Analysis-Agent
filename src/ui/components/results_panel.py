@@ -1199,20 +1199,7 @@ def render_results_panel(code="", language="python"):
                     unsafe_allow_html=True,
                 )
 
-            if prioritized_fixes:
-                st.write("")
-                st.markdown("#### ⚡ Priority Action Roadmap (Required Before Merge)")
-                for idx, fix in enumerate(prioritized_fixes, 1):
-                    st.markdown(
-                        f"""
-                        <div class="action-item-light">
-                            <strong style="color: #7c3aed; margin-right: 6px;">#{idx}</strong> 
-                            {escape(str(fix))}
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-
+            
         st.markdown('<div class="purple-divider"></div>', unsafe_allow_html=True)
         st.markdown("### 📈 Visual Vulnerability & Quality Distribution")
         render_dashboard_charts(severity, findings_df)
