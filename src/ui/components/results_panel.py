@@ -450,11 +450,165 @@ def render_dashboard_charts(severity_breakdown, findings_df):
             st.plotly_chart(fig_stack, use_container_width=True, config=plot_config)
 
 
+
+# =========================================================
+# MULTI-DIMENSIONAL CODE HEALTH RADAR
+# =========================================================
+
+CODE_HEALTH_DIMENSIONS = {
+    "Security": ("security", "vulnerability", "injection", "secret", "authentication", "authorization"),
+    "Maintainability": ("maintainability", "maintainable", "readability", "readable", "code smell", "duplication", "documentation", "design"),
+    "Performance": ("performance", "optimization", "slow", "latency", "memory usage", "inefficient"),
+    "Complexity": ("complexity", "complex", "cyclomatic", "nested", "coupling", "cognitive"),
+    "Reliability": ("reliability", "reliable", "exception", "error handling", "failure", "robustness", "null pointer"),
+}
+
+
+def _find_explicit_dimension_scores(value):
+    """Find explicitly supplied dimension scores in nested agent output."""
+    aliases = {
+        "security": ("security", "security_score"),
+        "maintainability": ("maintainability", "maintainability_score"),
+        "performance": ("performance", "performance_score"),
+        "complexity": ("complexity", "complexity_score"),
+        "reliability": ("reliability", "reliability_score"),
+    }
+    found = {}
+
+    def walk(item):
+        if isinstance(item, dict):
+            for key, child in item.items():
+                normalized = str(key).lower().replace("-", "_").replace(" ", "_")
+                for dimension, names in aliases.items():
+                    if normalized in names or normalized == f"{dimension}_health_score":
+                        candidate = child
+                        if isinstance(candidate, dict):
+                            candidate = candidate.get("score", candidate.get("value"))
+                        try:
+                            score = float(candidate)
+                            if 0 <= score <= 100:
+                                found[dimension] = score
+                        except (TypeError, ValueError):
+                            pass
+                walk(child)
+        elif isinstance(item, (list, tuple)):
+            for child in item:
+                walk(child)
+
+    walk(value)
+    return found
+
+
+def get_code_health_dimensions(analysis, findings):
+    """
+    Prefer scores returned by agents. For dimensions without an explicit score,
+    derive a score from matching findings using the dashboard's existing
+    severity weights (100 minus the matching finding penalties).
+    """
+    explicit = _find_explicit_dimension_scores(analysis)
+    scores = {}
+
+    for dimension, keywords in CODE_HEALTH_DIMENSIONS.items():
+        key = dimension.lower()
+        if key in explicit:
+            scores[dimension] = round(explicit[key])
+            continue
+
+        penalty = 0
+        for finding in findings:
+            searchable = " ".join(
+                clean_text(finding.get(field), "")
+                for field in ("category", "finding_type", "issue", "description")
+            ).lower()
+
+            if any(keyword in searchable for keyword in keywords):
+                severity_name = clean_text(finding.get("severity"), "").upper()
+                penalty += SEVERITY_WEIGHTS.get(severity_name, 0)
+
+        scores[dimension] = max(0, min(100, 100 - penalty))
+
+    return scores
+
+
+def render_code_health_radar(analysis, findings):
+    scores = get_code_health_dimensions(analysis, findings)
+    dimensions = list(CODE_HEALTH_DIMENSIONS.keys())
+    values = [scores[name] for name in dimensions]
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatterpolar(
+        r=values + [values[0]],
+        theta=dimensions + [dimensions[0]],
+        fill="toself",
+        fillcolor="rgba(124, 58, 237, 0.16)",
+        line=dict(color="#7C3AED", width=2.5),
+        marker=dict(size=6, color="#7C3AED"),
+        hovertemplate="%{theta}: %{r}/100<extra></extra>",
+        name="Code Health",
+    ))
+
+    fig.update_layout(
+        height=315,
+        margin=dict(t=28, b=25, l=35, r=35),
+        paper_bgcolor="#FFFFFF",
+        plot_bgcolor="#FFFFFF",
+        showlegend=False,
+        font=dict(family="Plus Jakarta Sans, sans-serif", color="#312E81", size=10),
+        polar=dict(
+            bgcolor="#FFFFFF",
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                tickvals=[20, 40, 60, 80, 100],
+                tickfont=dict(size=8, color="#6B7280"),
+                gridcolor="#EDE9FE",
+                linecolor="#DDD6FE",
+            ),
+            angularaxis=dict(
+                tickfont=dict(size=10, color="#312E81"),
+                gridcolor="#EDE9FE",
+                linecolor="#DDD6FE",
+            ),
+        ),
+    )
+
+    radar_col, details_col = st.columns([1.05, 1], vertical_alignment="center")
+    with radar_col:
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
+
+    with details_col:
+        st.markdown("**Dimension Scores**")
+        for dimension in dimensions:
+            score = scores[dimension]
+            score_color = "#16A34A" if score >= 80 else ("#D97706" if score >= 50 else "#DC2626")
+            st.markdown(
+                f"""
+                <div style="display:flex; justify-content:space-between; align-items:center;
+                            padding:7px 9px; margin:5px 0; border:1px solid #EDE9FE;
+                            border-radius:7px; background:#FAF5FF;">
+                    <span style="font-size:0.84rem; color:#312E81;">{dimension}</span>
+                    <strong style="font-size:0.88rem; color:{score_color};">{score}/100</strong>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    st.caption(
+        "Scores use explicit agent-provided values when available. Otherwise, "
+        "they are derived from matching findings using the dashboard's existing "
+        "severity penalties."
+    )
+
+
 # =========================================================
 # PDF REPORT EXPORT
 # =========================================================
 
-def create_pdf_charts(severity_breakdown, findings_df):
+def create_pdf_charts(severity_breakdown, findings_df, analysis=None, findings=None):
     chart_images = []
 
     counts = [
@@ -513,6 +667,51 @@ def create_pdf_charts(severity_breakdown, findings_df):
         plt.close(fig)
         category_buffer.seek(0)
         chart_images.append(category_buffer)
+
+    # Multi-dimensional code health radar for the PDF report
+    findings = findings or []
+    dimension_scores = get_code_health_dimensions(analysis or {}, findings)
+    dimensions = list(CODE_HEALTH_DIMENSIONS.keys())
+    radar_values = [dimension_scores[name] for name in dimensions]
+
+    radar_fig = plt.figure(figsize=(6.2, 3.8))
+    radar_ax = radar_fig.add_subplot(111, polar=True)
+    angles = [index / float(len(dimensions)) * 2 * 3.141592653589793
+              for index in range(len(dimensions))]
+    closed_angles = angles + angles[:1]
+    closed_values = radar_values + radar_values[:1]
+
+    radar_ax.plot(
+        closed_angles,
+        closed_values,
+        color="#7C3AED",
+        linewidth=2,
+        marker="o",
+        markersize=4,
+    )
+    radar_ax.fill(closed_angles, closed_values, color="#7C3AED", alpha=0.16)
+    radar_ax.set_xticks(angles)
+    radar_ax.set_xticklabels(dimensions, fontsize=8)
+    radar_ax.set_ylim(0, 100)
+    radar_ax.set_yticks([20, 40, 60, 80, 100])
+    radar_ax.set_yticklabels(["20", "40", "60", "80", "100"], fontsize=6)
+    radar_ax.grid(color="#DDD6FE", alpha=0.8)
+    radar_ax.spines["polar"].set_color("#DDD6FE")
+    radar_fig.suptitle("Multi-Dimensional Code Health Radar", fontsize=11, fontweight="bold")
+    radar_fig.tight_layout(pad=1.5)
+
+    radar_buffer = BytesIO()
+    radar_fig.savefig(
+        radar_buffer,
+        format="png",
+        dpi=220,
+        bbox_inches="tight",
+        pad_inches=0.12,
+        facecolor="white",
+    )
+    plt.close(radar_fig)
+    radar_buffer.seek(0)
+    chart_images.append(radar_buffer)
 
     return chart_images
 
@@ -642,7 +841,9 @@ def generate_dashboard_pdf(data):
 
     # Visual Analytics
     story.append(Paragraph("Visual Analytics", styles["SectionCustom"]))
-    for chart_buffer in create_pdf_charts(breakdown, findings_df):
+    for chart_buffer in create_pdf_charts(
+        breakdown, findings_df, data.get('analysis'), findings
+    ):
         chart_buffer.seek(0)
         chart = PDFImage(
         chart_buffer,
@@ -749,6 +950,7 @@ def render_results_panel(code="", language="python"):
         "findings": findings,
         "remediations": remediations,
         "code": code,
+        "analysis": analysis,
     }
 
     # -----------------------------------------------------
@@ -1014,6 +1216,11 @@ def render_results_panel(code="", language="python"):
         st.markdown('<div class="purple-divider"></div>', unsafe_allow_html=True)
         st.markdown("### 📈 Visual Vulnerability & Quality Distribution")
         render_dashboard_charts(severity, findings_df)
+
+        st.write("")
+        with st.container(border=True):
+            st.markdown("#### 🕸️ Multi-Dimensional Code Health Radar")
+            render_code_health_radar(analysis, findings)
 
     # =====================================================
     # TAB 2: FINDINGS TABLE & DEEP DIVE

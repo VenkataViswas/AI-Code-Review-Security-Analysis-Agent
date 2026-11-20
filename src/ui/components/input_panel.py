@@ -1,3 +1,4 @@
+from textwrap import dedent
 from xml.sax.saxutils import escape
 
 import streamlit as st
@@ -84,6 +85,11 @@ PRESET_SAMPLES = {
         ),
     },
 }
+
+
+def clear_syntax_error():
+    """Remove stale syntax errors whenever the editor content changes."""
+    st.session_state.pop("syntax_error", None)
 
 
 def render_input_panel():
@@ -181,7 +187,10 @@ def render_input_panel():
     current_code = st.session_state.get("code_text", "")
 
     # Auto-detect language from source code only; never force a default.
-    language = detect_language(current_code) if current_code.strip() else "Not detected"
+    language = (
+    detect_language(current_code, upload_name)
+    if current_code.strip()
+    else "Not detected")
 
     line_count = len(current_code.splitlines()) if current_code else 0
     char_count = len(current_code)
@@ -199,7 +208,7 @@ def render_input_panel():
 
     st.write("")
     st.markdown(
-        f"""
+        dedent(f"""
         <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 10px 16px; border-radius: 10px 10px 0 0; border: 1.5px solid #e9d5ff; border-bottom: none; box-shadow: 0 1px 2px rgba(124, 58, 237, 0.04);">
             <div style="display: flex; align-items: center; gap: 10px;">
                 <span style="font-family: var(--font-mono); font-size: 0.88rem; font-weight: 600; color: #1e1b4b;">
@@ -215,7 +224,7 @@ def render_input_panel():
                 <span style="color: #7c3aed; font-weight: 600;">● Syntax Check Ready</span>
             </div>
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -225,6 +234,7 @@ def render_input_panel():
         height=380,
         label_visibility="collapsed",
         placeholder="Paste your Python or Java code here, or choose a benchmark preset above...",
+        on_change=clear_syntax_error,
     )
 
     # ---------------------------------------------------------
@@ -239,7 +249,7 @@ def render_input_panel():
         err_line = syntax_err.get("line_number", "N/A")
 
         st.markdown(
-            f"""
+            dedent(f"""
             <div class="syntax-error-banner">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <div class="syntax-error-title">
@@ -257,7 +267,7 @@ def render_input_panel():
                     <span>💡</span> <strong>Correction Suggestion:</strong> {err_sugg}
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -281,12 +291,12 @@ def render_input_panel():
 
     with note_col:
         st.markdown(
-            """
+            dedent("""
             <div style="font-size: 0.84rem; color: #6b7280; line-height: 1.4; padding-left: 10px;">
                 🔒 <strong>Zero-Execution Sandbox:</strong> Code is statically verified using AST parsing and semantic rules. 
                 Your code is never compiled with untrusted binaries or executed directly.
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
@@ -302,7 +312,7 @@ def render_input_panel():
 
     with col_a:
         st.markdown(
-            """
+            dedent("""
             <div class="pipeline-card-light">
                 <div style="font-size: 1.3rem; margin-bottom: 6px;">🔍</div>
                 <div style="font-weight: 700; font-size: 0.95rem; color: #1e1b4b;">1. Code Analysis</div>
@@ -311,13 +321,13 @@ def render_input_panel():
                     Scans AST structure, cyclomatic complexity, code smells, anti-patterns, and maintainability.
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
     with col_b:
         st.markdown(
-            """
+            dedent("""
             <div class="pipeline-card-light">
                 <div style="font-size: 1.3rem; margin-bottom: 6px;">🛡️</div>
                 <div style="font-weight: 700; font-size: 0.95rem; color: #1e1b4b;">2. Security Agent</div>
@@ -326,13 +336,13 @@ def render_input_panel():
                     Scans for SQLi, XSS, hardcoded credentials, token exposure, and broken access controls.
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
     with col_c:
         st.markdown(
-            """
+            dedent("""
             <div class="pipeline-card-light">
                 <div style="font-size: 1.3rem; margin-bottom: 6px;">🛠️</div>
                 <div style="font-weight: 700; font-size: 0.95rem; color: #1e1b4b;">3. Remediation Agent</div>
@@ -341,13 +351,13 @@ def render_input_panel():
                     Generates production-grade corrected code patches and industry best practice standards.
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 
     with col_d:
         st.markdown(
-            """
+            dedent("""
             <div class="pipeline-card-light">
                 <div style="font-size: 1.3rem; margin-bottom: 6px;">📋</div>
                 <div style="font-weight: 700; font-size: 0.95rem; color: #1e1b4b;">4. PR Summary & RAG</div>
@@ -356,7 +366,7 @@ def render_input_panel():
                     Computes Security Letter Grade, generates PR review summaries, and powers the RAG Assistant.
                 </div>
             </div>
-            """,
+            """),
             unsafe_allow_html=True,
         )
 

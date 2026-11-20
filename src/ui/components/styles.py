@@ -111,44 +111,60 @@ def load_styles():
         }
 
         /* Primary Purple Action Buttons */
-        div.stButton > button[kind="primary"],
-        div.stDownloadButton > button[kind="primary"],
-        div.stButton > button[data-testid="stBaseButton-primary"] {
-            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
-            color: #ffffff !important;
-            border: 1px solid #6d28d9 !important;
-            box-shadow: 0 2px 10px rgba(124, 58, 237, 0.28) !important;
-        }
+div.stButton > button[kind="primary"],
+div.stDownloadButton > button[kind="primary"],
+div.stButton > button[data-testid="stBaseButton-primary"],
+div.stDownloadButton > button[data-testid="stBaseButton-primary"] {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    border: 1px solid #6d28d9 !important;
+    box-shadow: 0 2px 10px rgba(124, 58, 237, 0.28) !important;
+}
 
-        div.stButton > button[kind="primary"]:hover,
-        div.stDownloadButton > button[kind="primary"]:hover,
-        div.stButton > button[data-testid="stBaseButton-primary"]:hover {
-            background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%) !important;
-            box-shadow: 0 4px 16px rgba(124, 58, 237, 0.45) !important;
-            transform: translateY(-1.5px) !important;
-            color: #ffffff !important;
-        }
+/* Force Primary Button Text to White */
+div.stButton > button[kind="primary"] *,
+div.stDownloadButton > button[kind="primary"] *,
+div.stButton > button[data-testid="stBaseButton-primary"] *,
+div.stDownloadButton > button[data-testid="stBaseButton-primary"] * {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
 
-        /* Download Button */
-        div.stDownloadButton > button {
-            border-radius: 8px !important;
-            font-family: var(--font-sans) !important;
-            font-weight: 600 !important;
-            font-size: 0.9rem !important;
-            background: #ffffff !important;
-            color: #7c3aed !important;
-            border: 1.5px solid #a855f7 !important;
-            box-shadow: var(--shadow-sm) !important;
-            transition: all 0.2s ease !important;
-        }
+div.stButton > button[kind="primary"]:hover,
+div.stDownloadButton > button[kind="primary"]:hover,
+div.stButton > button[data-testid="stBaseButton-primary"]:hover,
+div.stDownloadButton > button[data-testid="stBaseButton-primary"]:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #5b21b6 100%) !important;
+    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.45) !important;
+    transform: translateY(-1.5px) !important;
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+}
 
-        div.stDownloadButton > button:hover {
-            background: #faf5ff !important;
-            color: #6d28d9 !important;
-            border-color: #7c3aed !important;
-            box-shadow: var(--shadow-md) !important;
-            transform: translateY(-1px) !important;
-        }
+/* Download Button */
+div.stDownloadButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]) {
+    border-radius: 8px !important;
+    font-family: var(--font-sans) !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    background: #ffffff !important;
+    color: #7c3aed !important;
+    -webkit-text-fill-color: #7c3aed !important;
+    border: 1.5px solid #a855f7 !important;
+    box-shadow: var(--shadow-sm) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Download Button Hover */
+div.stDownloadButton > button:not([kind="primary"]):not([data-testid="stBaseButton-primary"]):hover {
+    background: #faf5ff !important;
+    color: #6d28d9 !important;
+    -webkit-text-fill-color: #6d28d9 !important;
+    border-color: #7c3aed !important;
+    box-shadow: var(--shadow-md) !important;
+    transform: translateY(-1px) !important;
+}
 
         /* File Uploader in Purple Theme */
         div[data-testid="stFileUploader"] {
