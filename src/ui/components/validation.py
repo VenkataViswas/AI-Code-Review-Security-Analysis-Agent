@@ -54,117 +54,98 @@ def analyze_python_syntax(code: str):
 
 
 def analyze_java_syntax(code: str):
-    """Analyze Java syntax including delimiter balance, semicolons, and javac diagnostics."""
+    """Validate Java syntax using javac, avoiding unreliable line-based checks."""
+
+    if not code.strip():
+        return False, {
+            "language": "Java",
+            "title": "Empty Input",
+            "line_number": 1,
+            "message": "No Java code provided.",
+            "code_line": "",
+            "snippet": "Empty source code.",
+            "suggestion": "Paste or upload Java source code.",
+        }
+
+    javac = shutil.which("javac")
+
+    # Compiler unavailable: do not falsely report syntax errors.
+    # Allow CRSA analysis to continue.
+    if not javac:
+        return True, None
+
     lines = code.splitlines()
 
-    # 1. Delimiter balance check
-    open_braces = code.count("{")
-    close_braces = code.count("}")
-    if open_braces != close_braces:
-        diff = abs(open_braces - close_braces)
-        missing_type = "closing '}'" if open_braces > close_braces else "opening '{'"
-        return False, {
-            "language": "Java",
-            "title": "Java Syntax Error: Unbalanced Braces",
-            "line_number": len(lines),
-            "message": f"Brace count mismatch: {open_braces} opening '{{' vs {close_braces} closing '}}' (Missing {diff} {missing_type}).",
-            "code_line": "Ensure all class and method bodies are properly closed.",
-            "snippet": f"Total '{{': {open_braces} | Total '}}': {close_braces}",
-            "suggestion": f"Check class and method declarations for missing {missing_type}.",
-        }
+    # Detect public class/interface/enum/record for correct filename.
+    match = re.search(
+        r"\bpublic\s+(?:(?:abstract|final|sealed|non-sealed)\s+)*"
+        r"(?:class|interface|enum|record)\s+(\w+)",
+        code
+    )
 
-    open_parens = code.count("(")
-    close_parens = code.count(")")
-    if open_parens != close_parens:
-        diff = abs(open_parens - close_parens)
-        missing_type = "closing ')'" if open_parens > close_parens else "opening '('"
-        return False, {
-            "language": "Java",
-            "title": "Java Syntax Error: Unbalanced Parentheses",
-            "line_number": len(lines),
-            "message": f"Parenthesis mismatch: {open_parens} opening '(' vs {close_parens} closing ')' (Missing {diff} {missing_type}).",
-            "code_line": "Ensure all method signatures, conditions, and calls have matching parentheses.",
-            "snippet": f"Total '(': {open_parens} | Total ')': {close_parens}",
-            "suggestion": f"Check expressions and parameter lists for missing {missing_type}.",
-        }
+    class_name = match.group(1) if match else "Main"
 
-    # 2. Missing semicolon checks on common statements
-    for idx, raw_line in enumerate(lines, 1):
-        stripped = raw_line.strip()
-        if not stripped or stripped.startswith("//") or stripped.startswith("/*") or stripped.startswith("*"):
-            continue
-        if stripped.endswith("{") or stripped.endswith("}") or stripped.endswith(":"):
-            continue
+    with tempfile.TemporaryDirectory() as tmp:
+        file_path = Path(tmp) / f"{class_name}.java"
+        file_path.write_text(code, encoding="utf-8")
 
-        if stripped.startswith("package ") or stripped.startswith("import "):
-            if not stripped.endswith(";"):
-                return False, {
-                    "language": "Java",
-                    "title": f"Java Syntax Error (Line {idx})",
-                    "line_number": idx,
-                    "message": "Missing semicolon ';' at end of import/package declaration.",
-                    "code_line": raw_line,
-                    "snippet": f"Line {idx}: {raw_line}\n{' ' * len(f'Line {idx}: {raw_line}')}^\nSyntaxError: missing ';'",
-                    "suggestion": f"Add a semicolon ';' to terminate line {idx}.",
-                }
-
-        # Statement patterns that strictly require semicolon
-        stmt_keywords = ("return ", "System.out.println", "System.out.print", "throw ", "break", "continue")
-        if any(stripped.startswith(k) for k in stmt_keywords):
-            if not stripped.endswith(";"):
-                return False, {
-                    "language": "Java",
-                    "title": f"Java Syntax Error (Line {idx})",
-                    "line_number": idx,
-                    "message": "Missing semicolon ';' at end of statement.",
-                    "code_line": raw_line,
-                    "snippet": f"Line {idx}: {raw_line}\n{' ' * len(f'Line {idx}: {raw_line}')}^\nSyntaxError: missing ';'",
-                    "suggestion": f"Add a semicolon ';' to terminate statement on line {idx}.",
-                }
-
-    # 3. If javac is installed and operational, check compiler diagnostics
-    javac = shutil.which("javac")
-    if javac:
         try:
-            with tempfile.TemporaryDirectory() as tmp:
-                match = re.search(r"\bpublic\s+(?:final\s+|abstract\s+)?class\s+(\w+)", code)
-                class_name = match.group(1) if match else "Main"
-                file_path = Path(tmp) / f"{class_name}.java"
-                file_path.write_text(code, encoding="utf-8")
+            proc = subprocess.run(
+                [javac, "-Xlint:all", "-d", tmp, str(file_path)],
+                capture_output=True,
+                text=True,
+                timeout=20
+            )
 
-                proc = subprocess.run(
-                    [javac, "-Xlint:all", str(file_path)],
-                    capture_output=True,
-                    text=True,
-                    timeout=10,
+            output = (proc.stderr or proc.stdout).strip()
+
+            # Valid Java source
+            if proc.returncode == 0:
+                return True, None
+
+            # javac invocation/environment failure is NOT a source syntax error
+            if not output or "Usage: javac" in output:
+                return True, None
+
+            # Parse actual compiler diagnostic
+            error_match = re.search(
+                r"\.java:(\d+):\s*error:\s*(.+)",
+                output
+            )
+
+            if error_match:
+                line_no = int(error_match.group(1))
+                error_message = error_match.group(2).strip()
+
+                code_line = (
+                    lines[line_no - 1]
+                    if 1 <= line_no <= len(lines)
+                    else ""
                 )
-                output = (proc.stderr or proc.stdout).strip()
 
-                # If javac succeeded, it is valid
-                if proc.returncode == 0:
-                    return True, None
+                return False, {
+                    "language": "Java",
+                    "title": f"Java Syntax Error (Line {line_no})",
+                    "line_number": line_no,
+                    "message": error_message,
+                    "code_line": code_line,
+                    "snippet": output[:1000],
+                    "suggestion": (
+                        f"Review the Java compiler error on line {line_no}: "
+                        f"{error_message}"
+                    ),
+                }
 
-                # If javac failed with diagnostic output, parse line number & error message
-                if output and "without diagnostic output" not in output:
-                    line_match = re.search(rf"{class_name}\.java:(\d+):\s*error:\s*(.+)", output)
-                    line_no = int(line_match.group(1)) if line_match else 1
-                    err_msg = line_match.group(2) if line_match else "Java compilation error"
+            # Unknown compiler failure: don't mislabel it as a syntax error
+            return True, None
 
-                    return False, {
-                        "language": "Java",
-                        "title": f"Java Compilation Error (Line {line_no})",
-                        "line_number": line_no,
-                        "message": err_msg,
-                        "code_line": lines[line_no - 1] if line_no <= len(lines) else "",
-                        "snippet": output[:400],
-                        "suggestion": f"Review javac compiler diagnostics on line {line_no}.",
-                    }
+        except subprocess.TimeoutExpired:
+            # Do not block analysis due to compiler timeout
+            return True, None
+
         except Exception:
-            # Fall back to delimiter verification if sandbox restricts javac execution
-            pass
-
-    return True, None
-
+            # Compiler execution failure should not create false syntax errors
+            return True, None
 
 def validate_code(code: str, language: str):
     """Validate source code with high-precision syntax checking."""
